@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block page %}Subscribe{% endblock %}
+
+{% block content %}
+<h2>Subscribe</h2>
+<h5>Choose which aspects of your profile to update</h5>
+<form action="/update_settings" method="post" enctype="application/x-www-form-urlencoded">
+    <div class="mb-3">
+        <label for="profile_id" class="form-label">Profile ID</label>
+        <input id="profile_id" type="text" name="profile_id" class="form-control" required value="{{ profile_id }}" />
+        <div class="form-text">Profile ID can be found at the end of the URL when viewing your Goodreads profile.</div>
+    </div>
+
+    <div class="mb-3">
+        <input id="update_picture" type="checkbox" name="update_picture" {% if update_picture %}checked{% endif %} />
+        <label for="update_picture" class="form-label">Update profile picture</label>
+    </div>
+
+    <div class="mb-3">
+        <input id="update_status" type="checkbox" name="update_status" {% if update_status %}checked{% endif %} />
+        <label for="update_status" class="form-label">Update status</label>
+    </div>
+
+    <div class="mb-3">
+        <input id="update_title" type="checkbox" name="update_title" {% if update_title %}checked{% endif %} />
+        <label for="update_title" class="form-label">Update title</label>
+    </div>
+
+    <input hidden id="id" type="text" name="id" value="{{ id }}" />
+    <button type="submit" class="btn btn-primary">Submit</button>
+</form>
+{% endblock %}

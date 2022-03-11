@@ -1,0 +1,229 @@
+{
+  "db": "PostgreSQL",
+  "26e7e05427bc7dabcd7815d27764fda2baf4cfe60a2d2d6ee2a1f773dccbbce2": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Text"
+        },
+        {
+          "name": "scope",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "access_token",
+          "ordinal": 2,
+          "type_info": "Text"
+        },
+        {
+          "name": "token_type",
+          "ordinal": 3,
+          "type_info": "Text"
+        },
+        {
+          "name": "profile_id",
+          "ordinal": 4,
+          "type_info": "Text"
+        },
+        {
+          "name": "title",
+          "ordinal": 5,
+          "type_info": "Text"
+        },
+        {
+          "name": "update_picture",
+          "ordinal": 6,
+          "type_info": "Bool"
+        },
+        {
+          "name": "update_status",
+          "ordinal": 7,
+          "type_info": "Bool"
+        },
+        {
+          "name": "update_title",
+          "ordinal": 8,
+          "type_info": "Bool"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        true,
+        true,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": []
+      }
+    },
+    "query": "SELECT * FROM users"
+  },
+  "34faff8f5f077d2913052873d468cc09ae3f3cac8b884c6cd8ca9aec5a38e92e": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Text"
+        },
+        {
+          "name": "scope",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "access_token",
+          "ordinal": 2,
+          "type_info": "Text"
+        },
+        {
+          "name": "token_type",
+          "ordinal": 3,
+          "type_info": "Text"
+        },
+        {
+          "name": "profile_id",
+          "ordinal": 4,
+          "type_info": "Text"
+        },
+        {
+          "name": "title",
+          "ordinal": 5,
+          "type_info": "Text"
+        },
+        {
+          "name": "update_picture",
+          "ordinal": 6,
+          "type_info": "Bool"
+        },
+        {
+          "name": "update_status",
+          "ordinal": 7,
+          "type_info": "Bool"
+        },
+        {
+          "name": "update_title",
+          "ordinal": 8,
+          "type_info": "Bool"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        true,
+        true,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Text",
+          "Text",
+          "Text",
+          "Bool",
+          "Bool",
+          "Bool",
+          "Text"
+        ]
+      }
+    },
+    "query": "\n            INSERT INTO users\n            (id, scope, access_token, token_type, update_picture, update_status, update_title)\n            VALUES ($1, $2, $3, $4, $5, $6, $7)\n            ON CONFLICT (id)\n            DO UPDATE\n            SET access_token = $8\n            RETURNING *\n        "
+  },
+  "3c6748bc8416450ecd3632d2989791df8ec8d7f67ae488cee02d9c3371fa2bf2": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Text"
+        },
+        {
+          "name": "scope",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "access_token",
+          "ordinal": 2,
+          "type_info": "Text"
+        },
+        {
+          "name": "token_type",
+          "ordinal": 3,
+          "type_info": "Text"
+        },
+        {
+          "name": "profile_id",
+          "ordinal": 4,
+          "type_info": "Text"
+        },
+        {
+          "name": "title",
+          "ordinal": 5,
+          "type_info": "Text"
+        },
+        {
+          "name": "update_picture",
+          "ordinal": 6,
+          "type_info": "Bool"
+        },
+        {
+          "name": "update_status",
+          "ordinal": 7,
+          "type_info": "Bool"
+        },
+        {
+          "name": "update_title",
+          "ordinal": 8,
+          "type_info": "Bool"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        true,
+        true,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Bool",
+          "Bool",
+          "Bool",
+          "Text"
+        ]
+      }
+    },
+    "query": "\n            UPDATE users\n            SET (profile_id, update_picture, update_status, update_title) = ($1, $2, $3, $4)\n            WHERE id = $5\n            RETURNING *\n        "
+  },
+  "d16e97b087250d7d814e1d0c10b1a4fa88687f482af44c1b20a96ac9900487e0": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Text"
+        ]
+      }
+    },
+    "query": "UPDATE users SET title = $1 WHERE id = $2"
+  }
+}
