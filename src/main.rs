@@ -11,7 +11,7 @@ use axum::{
     routing::{get, post},
     Router,
 };
-use axum_server::tls_rustls::RustlsConfig;
+// use axum_server::tls_rustls::RustlsConfig;
 use dotenv::dotenv;
 
 use db::init_db;
@@ -31,9 +31,9 @@ async fn main() {
 
     let pool = init_db(&config).await;
 
-    let rustls_config = RustlsConfig::from_pem_file("conf/cert.pem", "conf/key.pem")
-        .await
-        .unwrap();
+    // let rustls_config = RustlsConfig::from_pem_file("conf/cert.pem", "conf/key.pem")
+    //     .await
+    //     .unwrap();
 
     let app = Router::new()
         .route("/", get(subscribe))
@@ -42,7 +42,8 @@ async fn main() {
         .layer(Extension(pool))
         .layer(Extension(context));
 
-    axum_server::bind_rustls(addr, rustls_config)
+    // axum_server::bind_rustls(addr, rustls_config)
+    axum_server::bind(addr)
         .serve(app.into_make_service())
         .await
         .unwrap();
