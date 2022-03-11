@@ -4,7 +4,7 @@ mod routes;
 mod structs;
 mod templates;
 
-use std::{env, net::SocketAddr, sync::Arc};
+use std::{env, fs::create_dir_all, net::SocketAddr, sync::Arc};
 
 use axum::{
     extract::Extension,
@@ -22,7 +22,7 @@ use structs::*;
 async fn main() {
     let config = init();
 
-    let addr = SocketAddr::from(([127, 0, 0, 1], config.port));
+    let addr = SocketAddr::from(([0, 0, 0, 0], config.port));
 
     let context = Arc::new(Context {
         client_id: config.client_id.clone(),
@@ -34,6 +34,8 @@ async fn main() {
     // let rustls_config = RustlsConfig::from_pem_file("conf/cert.pem", "conf/key.pem")
     //     .await
     //     .unwrap();
+
+    create_dir_all("covers").unwrap();
 
     let app = Router::new()
         .route("/", get(subscribe))
@@ -55,7 +57,7 @@ fn init() -> AppConfig {
     let client_id = env::var("CLIENT_ID").expect("CLIENT_ID must be set");
     let client_secret = env::var("CLIENT_SECRET").expect("CLIENT_SECRET must be set");
     let port = env::var("PORT")
-        .unwrap_or_else(|_| String::from("3000"))
+        .expect("PORT must be set")
         .parse::<u16>()
         .unwrap();
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
