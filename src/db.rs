@@ -8,13 +8,7 @@ pub async fn init_db(config: &AppConfig) -> Pool<Postgres> {
 
     let pool = PgPoolOptions::new()
         .max_connections(5)
-        .connect(&format!(
-            "postgres://{}:{}@{}/{}",
-            config.postgres_user,
-            config.postgres_password,
-            config.postgres_host,
-            config.postgres_db
-        ))
+        .connect(&config.database_url)
         .await
         .expect("Unable to connect to database");
 

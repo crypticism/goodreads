@@ -23,7 +23,7 @@ pub async fn subscribe(
         "https://slack.com/api/oauth.v2.access?code={}&client_id={}&client_secret={}",
         params
             .get("code")
-            .ok_or(anyhow::anyhow!("Missing code query param"))?,
+            .ok_or_else(|| anyhow::anyhow!("Missing code query param"))?,
         context.client_id,
         context.client_secret
     );

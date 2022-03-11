@@ -47,10 +47,7 @@ pub struct AppConfig {
     pub client_id: String,
     pub client_secret: String,
     pub port: u16,
-    pub postgres_db: String,
-    pub postgres_host: String,
-    pub postgres_password: String,
-    pub postgres_user: String,
+    pub database_url: String,
 }
 
 #[derive(Debug, FromRow, Deserialize, Serialize)]

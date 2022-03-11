@@ -1,6 +1,5 @@
 use std::{collections::HashMap, fs::File, io::Write};
 
-use reqwest;
 use scraper::Selector;
 use serde_json::json;
 use sqlx::{Pool, Postgres};
@@ -119,21 +118,21 @@ async fn get_book_info(profile_id: &str) -> Result<(String, String), anyhow::Err
     let currently_reading = document
         .select(&currently_reading_selector)
         .next()
-        .ok_or(anyhow::anyhow!("Unable to find current book"))?;
+        .ok_or_else(|| anyhow::anyhow!("Unable to find current book"))?;
 
     let title = currently_reading
         .select(&title_selector)
         .next()
-        .ok_or(anyhow::anyhow!("Unable to find title"))?
+        .ok_or_else(|| anyhow::anyhow!("Unable to find title"))?
         .inner_html();
 
     let img = currently_reading
         .select(&image_selector)
         .next()
-        .ok_or(anyhow::anyhow!("Unable to find cover"))?
+        .ok_or_else(|| anyhow::anyhow!("Unable to find cover"))?
         .value()
         .attr("src")
-        .ok_or(anyhow::anyhow!("Unable to find cover"))?;
+        .ok_or_else(|| anyhow::anyhow!("Unable to find cover"))?;
 
     Ok((title, img.to_string()))
 }
@@ -141,10 +140,7 @@ async fn get_book_info(profile_id: &str) -> Result<(String, String), anyhow::Err
 // Checkboxes return "on" when checked which needs to be converted to a bool
 pub fn checkbox_to_bool(input: &Checkbox) -> bool {
     if let Some(val) = input {
-        match val.as_str() {
-            "on" => true,
-            _ => false,
-        }
+        matches!(val.as_str(), "on")
     } else {
         false
     }

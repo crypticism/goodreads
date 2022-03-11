@@ -54,21 +54,15 @@ fn init() -> AppConfig {
     let client_id = env::var("CLIENT_ID").expect("CLIENT_ID must be set");
     let client_secret = env::var("CLIENT_SECRET").expect("CLIENT_SECRET must be set");
     let port = env::var("PORT")
-        .unwrap_or(String::from("3000"))
+        .unwrap_or_else(|_| String::from("3000"))
         .parse::<u16>()
         .unwrap();
-    let postgres_user = env::var("POSTGRES_USER").expect("POSTGRES_USER must be set");
-    let postgres_host = env::var("POSTGRES_HOST").expect("POSTGRES_HOST must be set");
-    let postgres_db = env::var("POSTGRES_DB").expect("POSTGRES_DB must be set");
-    let postgres_password = env::var("POSTGRES_PASSWORD").expect("POSTGRES_PASSWORD must be set");
+    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
 
     AppConfig {
         client_id,
         client_secret,
         port,
-        postgres_db,
-        postgres_host,
-        postgres_password,
-        postgres_user,
+        database_url,
     }
 }

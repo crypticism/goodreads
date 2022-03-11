@@ -21,7 +21,7 @@ impl IntoResponse for MyError {
 
 impl From<anyhow::Error> for MyError {
     fn from(error: anyhow::Error) -> Self {
-        MyError(error.into())
+        MyError(error)
     }
 }
 
