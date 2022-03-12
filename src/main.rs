@@ -8,15 +8,17 @@ use std::{env, fs::create_dir_all, net::SocketAddr, sync::Arc};
 
 use axum::{
     extract::Extension,
-    routing::{get, post},
+    routing::{get, get_service, post},
     Router,
 };
 // use axum_server::tls_rustls::RustlsConfig;
 use dotenv::dotenv;
 
 use db::init_db;
+use reqwest::StatusCode;
 use routes::{refresh::refresh, subscribe::subscribe, update::update_settings};
 use structs::*;
+use tower_http::services::ServeDir;
 
 #[tokio::main]
 async fn main() {
@@ -41,6 +43,15 @@ async fn main() {
         .route("/", get(subscribe))
         .route("/refresh", get(refresh))
         .route("/update_settings", post(update_settings))
+        .nest(
+            "/static",
+            get_service(ServeDir::new("static")).handle_error(|error: std::io::Error| async move {
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    format!("Unhandled internal error: {}", error),
+                )
+            }),
+        )
         .layer(Extension(pool))
         .layer(Extension(context));
 
