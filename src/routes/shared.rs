@@ -4,7 +4,10 @@ use scraper::Selector;
 use serde_json::json;
 use sqlx::{Pool, Postgres};
 
-use crate::structs::{AppUser, Checkbox, ResponseSuccess, UserProfileGet};
+use crate::{
+    error::make_err,
+    structs::{AppUser, Checkbox, ResponseSuccess, UserProfileGet},
+};
 
 pub async fn update_profile(user: AppUser, pool: &Pool<Postgres>) -> Result<(), anyhow::Error> {
     if let Some(profile_id) = &user.profile_id {
@@ -13,13 +16,21 @@ pub async fn update_profile(user: AppUser, pool: &Pool<Postgres>) -> Result<(), 
         // Set currently reading title
         let _ = sqlx::query!("UPDATE users SET title = $1 WHERE id = $2", title, user.id)
             .execute(pool)
-            .await?;
+            .await
+            .map_err(|e| make_err(e, "Unable to update user"))?;
 
         // Download the cover if it hasn't already been saved
         let path = format!("covers/{}.jpg", title);
         if !std::path::Path::new(&path).exists() {
-            let image = reqwest::get(image).await?.bytes().await?;
-            let mut file = File::create(&path)?;
+            let image = reqwest::get(image)
+                .await
+                .map_err(|e| make_err(e, "Unable to retrieve cover from goodreads"))?
+                .bytes()
+                .await
+                .map_err(|e| make_err(e, "Unable to convert cover"))?;
+
+            let mut file =
+                File::create(&path).map_err(|e| make_err(e, "Unable to write cover to disk"))?;
             let _ = file.write_all(&image);
         }
 
@@ -47,10 +58,14 @@ pub async fn update_profile(user: AppUser, pool: &Pool<Postgres>) -> Result<(), 
                 .header("Authorization", format!("Bearer {}", &user.access_token))
                 .json(&json!({ "profile": profile }))
                 .send()
-                .await?;
+                .await
+                .map_err(|e| make_err(e, "Unable to connect to slack to set profile"))?;
 
             // Request can "succeed" with a failure message
-            let status: ResponseSuccess = resp.json().await?;
+            let status: ResponseSuccess = resp
+                .json()
+                .await
+                .map_err(|e| make_err(e, "Unable to parse response object"))?;
             if !status.ok {
                 return Err(anyhow::anyhow!(format!(
                     "Unable to set profile: {}",
@@ -63,16 +78,21 @@ pub async fn update_profile(user: AppUser, pool: &Pool<Postgres>) -> Result<(), 
             // Using the file method on multipart form requires using the blocking client
             tokio::task::spawn_blocking(move || -> Result<(), anyhow::Error> {
                 let client = reqwest::blocking::Client::new();
-                let form = reqwest::blocking::multipart::Form::new().file("image", &path)?;
+                let form = reqwest::blocking::multipart::Form::new()
+                    .file("image", &path)
+                    .map_err(|e| make_err(e, "Unable to open cover file"))?;
 
                 let resp = client
                     .post("https://slack.com/api/users.setPhoto")
                     .header("Authorization", format!("Bearer {}", &user.access_token))
                     .multipart(form)
-                    .send()?;
+                    .send()
+                    .map_err(|e| make_err(e, "Unable to connect to slack to set photo"))?;
 
                 // Request can "succeed" with a failure message
-                let status: ResponseSuccess = resp.json()?;
+                let status: ResponseSuccess = resp
+                    .json()
+                    .map_err(|e| make_err(e, "Unable to parse response object"))?;
                 if !status.ok {
                     return Err(anyhow::anyhow!(format!(
                         "Unable to set photo: {}",
@@ -94,9 +114,11 @@ async fn get_user_profile(user: &AppUser) -> Result<UserProfileGet, anyhow::Erro
         .get("https://slack.com/api/users.profile.get")
         .header("Authorization", format!("Bearer {}", user.access_token))
         .send()
-        .await?
+        .await
+        .map_err(|e| make_err(e, "Unable to retrieve profile information from slack"))?
         .json()
-        .await?)
+        .await
+        .map_err(|e| make_err(e, "Unable to convert response object"))?)
 }
 
 // Only gets information for the first book in the "Currently Reading" shelf
@@ -109,30 +131,32 @@ async fn get_book_info(profile_id: &str) -> Result<(String, String), anyhow::Err
         "https://www.goodreads.com/user/show/{}",
         profile_id
     ))
-    .await?
+    .await
+    .map_err(|e| make_err(e, "Unable to retrieve profile page from goodreads"))?
     .text()
-    .await?;
+    .await
+    .map_err(|e| make_err(e, "Unable to convert goodreads profile content"))?;
 
     let document = scraper::Html::parse_document(&response);
 
     let currently_reading = document
         .select(&currently_reading_selector)
         .next()
-        .ok_or_else(|| anyhow::anyhow!("Unable to find current book"))?;
+        .ok_or_else(|| anyhow::anyhow!("Unable to find current book. Make sure there is a book on your currently reading shelf."))?;
 
     let title = currently_reading
         .select(&title_selector)
         .next()
-        .ok_or_else(|| anyhow::anyhow!("Unable to find title"))?
+        .ok_or_else(|| anyhow::anyhow!("Unable to find title of current book"))?
         .inner_html();
 
     let img = currently_reading
         .select(&image_selector)
         .next()
-        .ok_or_else(|| anyhow::anyhow!("Unable to find cover"))?
+        .ok_or_else(|| anyhow::anyhow!("Unable to find cover image for current book"))?
         .value()
         .attr("src")
-        .ok_or_else(|| anyhow::anyhow!("Unable to find cover"))?;
+        .ok_or_else(|| anyhow::anyhow!("Unable to find cover image for current book"))?;
 
     Ok((title, img.to_string()))
 }

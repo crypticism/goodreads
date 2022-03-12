@@ -5,7 +5,7 @@ use axum::{
 use sqlx::{Pool, Postgres};
 
 use super::shared::{checkbox_to_bool, update_profile};
-use crate::error::MyError;
+use crate::error::{make_err, MyError};
 use crate::structs::{AppUser, UpdateProfileId};
 use crate::templates::{HtmlTemplate, SuccessTemplate};
 
@@ -33,7 +33,8 @@ pub async fn update_settings(
         form.id
     )
     .fetch_one(&pool)
-    .await?;
+    .await
+    .map_err(|e| make_err(e, "Unable to update user"))?;
 
     update_profile(user, &pool).await?;
 

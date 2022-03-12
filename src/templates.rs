@@ -20,6 +20,12 @@ pub struct SuccessTemplate {}
 #[template(path = "refresh.html")]
 pub struct RefreshTemplate {}
 
+#[derive(Template)]
+#[template(path = "error.html")]
+pub struct ErrorTemplate {
+    pub message: String,
+}
+
 pub struct HtmlTemplate<T>(pub T);
 
 impl<T> IntoResponse for HtmlTemplate<T>

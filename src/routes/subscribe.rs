@@ -8,7 +8,7 @@ use reqwest;
 
 use sqlx::{Pool, Postgres};
 
-use crate::error::MyError;
+use crate::error::{make_err, MyError};
 use crate::structs::{Authorization, Context};
 use crate::templates::{HtmlTemplate, SubscribeTemplate};
 
@@ -23,11 +23,16 @@ pub async fn subscribe(
         "https://slack.com/api/oauth.v2.access?code={}&client_id={}&client_secret={}",
         params
             .get("code")
-            .ok_or_else(|| anyhow::anyhow!("Missing code query param"))?,
+            .ok_or_else(|| anyhow::anyhow!("Missing query param from slack authentication"))?,
         context.client_id,
         context.client_secret
     );
-    let response = reqwest::get(url).await?.json::<Authorization>().await?;
+    let response = reqwest::get(url)
+        .await
+        .map_err(|e| make_err(e, "Unable to retrieve access token"))?
+        .json::<Authorization>()
+        .await
+        .map_err(|e| make_err(e, "Unable to convert slack response"))?;
 
     // Insert user into the database if it doesn't exist
     // If the user does exist, update the access token in case it has changed
@@ -51,7 +56,8 @@ pub async fn subscribe(
         &response.authed_user.access_token,
     )
     .fetch_one(&pool)
-    .await?;
+    .await
+    .map_err(|e| make_err(e, "Unable to upsert and retrieve user"))?;
 
     let profile_id = match user.profile_id {
         Some(val) => val,
